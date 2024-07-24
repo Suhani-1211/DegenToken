@@ -11,25 +11,34 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract DegenGamingToken is ERC20, Ownable {
-    constructor(address initialOwner) ERC20("DegenGamingToken", "DGT") Ownable(initialOwner){
-        transferOwnership(initialOwner); // Assuming the ownership of tokens should be transferred to the owner at contract creation. Adjust if that's not the case.
-    }
+    // Mapping to store item names and their redemption cost in DegenTokens
+    mapping(string => uint256) public itemCost;
+
+    constructor(address initialOwner) ERC20("DegenGamingToken", "DGT") Ownable(initialOwner) {
+        }
 
     function mint(address to, uint256 amount) public onlyOwner {
-         _mint(to, amount);
+        _mint(to, amount);
     }
 
-    function decimals() override public pure returns (uint8){
-        return 0;
+    function decimals() public pure override returns (uint8) {
+        return 0; 
     }
 
     function burn(uint256 amount) public {
-         _burn(msg.sender, amount);
+        _burn(msg.sender, amount);
     }
 
-    function redeem(address from, uint256 amount) public onlyOwner {
-         _burn(from, amount);
-        // Additional logic for redeeming tokens for in-game items can be added here
+    function redeem(string memory itemName) public {
+        uint256 cost = itemCost[itemName];
+        require(cost > 0, "Item does not exist or cost not set");
+        require(balanceOf(msg.sender) >= cost, "Insufficient balance to redeem item");
+
+        _burn(msg.sender, cost);
+    }
+
+    function setItemCost(string memory itemName, uint256 cost) public onlyOwner {
+        itemCost[itemName] = cost;
     }
 
     function getBalance(address account) public view returns (uint256) {
