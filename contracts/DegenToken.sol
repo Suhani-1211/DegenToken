@@ -1,9 +1,3 @@
-/*Minting new tokens: The platform should be able to create new tokens and distribute them to players as rewards. Only the owner can mint tokens.
-Transferring tokens: Players should be able to transfer their tokens to others.
-Redeeming tokens: Players should be able to redeem their tokens for items in the in-game store.
-Checking token balance: Players should be able to check their token balance at any time.
-Burning tokens: Anyone should be able to burn tokens, that they own, that are no longer needed.
- */
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
@@ -14,8 +8,10 @@ contract DegenGamingToken is ERC20, Ownable {
     // Mapping to store item names and their redemption cost in DegenTokens
     mapping(string => uint256) public itemCost;
 
-    constructor(address initialOwner) ERC20("DegenGamingToken", "DGT") Ownable(initialOwner) {
-        }
+    // Mapping to track redeemed items for each player
+    mapping(address => string[]) public redeemedItems;
+
+    constructor(address initialOwner) ERC20("DegenGamingToken", "DGT") Ownable(initialOwner) {}
 
     function mint(address to, uint256 amount) public onlyOwner {
         _mint(to, amount);
@@ -34,7 +30,11 @@ contract DegenGamingToken is ERC20, Ownable {
         require(cost > 0, "Item does not exist or cost not set");
         require(balanceOf(msg.sender) >= cost, "Insufficient balance to redeem item");
 
+        // Burn the tokens from the player's balance
         _burn(msg.sender, cost);
+
+        // Deliver the item to the player by adding it to their redeemed items
+        redeemedItems[msg.sender].push(itemName);
     }
 
     function setItemCost(string memory itemName, uint256 cost) public onlyOwner {
@@ -47,5 +47,10 @@ contract DegenGamingToken is ERC20, Ownable {
 
     function transferTokens(address to, uint256 amount) public returns (bool) {
         return transfer(to, amount);
+    }
+
+    // Function to retrieve the redeemed items of a player
+    function getRedeemedItems(address player) public view returns (string[] memory) {
+        return redeemedItems[player];
     }
 }
